@@ -1,6 +1,10 @@
 // Integrantes: Sebastián Robles - , Juan Camilo Caldas - 202322445
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class proyectoDalgoP1 {
@@ -74,6 +78,49 @@ public class proyectoDalgoP1 {
             return 0;
         } else {
             return dp[k][n];
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        try (
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            PrintWriter out = new PrintWriter(System.out);
+        ) {
+            // Leer número de casos de prueba
+            String line = br.readLine();
+            int t = Integer.parseInt(line.trim());
+            int[] resultados = new int[t];
+            
+            for (int test = 0; test < t; test++) {
+                line = br.readLine();
+                // Saltar líneas vacías
+                while (line != null && line.trim().isEmpty()) {
+                    line = br.readLine();
+                }
+                if (line == null) break;
+                
+                // Parsear la línea: k n P0 P1 P2 P3 P4
+                String[] parts = line.trim().split("\\s+");
+                int[] datos = Arrays.stream(parts)
+                    .mapToInt(Integer::parseInt)
+                    .toArray();
+                
+                int k = datos[0];   // número de celdas
+                int n = datos[1];   // suma total de energía
+                int P0 = datos[2];  // creatividad posición 0
+                int P1 = datos[3];  // creatividad posición 1
+                int P2 = datos[4];  // creatividad posición 2
+                int P3 = datos[5];  // creatividad posición 3
+                int P4 = datos[6];  // creatividad posición 4
+                
+                resultados[test] = problemaP1solucion(n, k, P0, P1, P2, P3, P4);
+            }
+            
+            // Escribir resultados al archivo de salida
+            for (int res : resultados) {
+                out.println(res);
+            }
+            out.flush();
         }
     }
 }
