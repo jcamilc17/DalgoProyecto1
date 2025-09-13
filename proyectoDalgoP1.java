@@ -3,9 +3,7 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 public class proyectoDalgoP1 {
 
@@ -33,25 +31,26 @@ public class proyectoDalgoP1 {
         return creatividad;
     }
 
-    public static ArrayList<Integer> calcularCreatividades(ArrayList<Integer> candidatos, int P0, int P1, 
+    public static int[] calcularCreatividades(int[] candidatos, int P0, int P1, 
         int P2, int P3, int P4){ 
         int [] P = {P0, P1, P2, P3, P4};
-        ArrayList<Integer> creatividades = new ArrayList<>();
+        int[] creatividades = new int[candidatos.length];
         
-        for (int candidato : candidatos) {
+        for (int i = 0; i < candidatos.length; i++) {
+            int candidato = candidatos[i];
             int creatividad = calcularCreatividad(candidato, P);
-            creatividades.add(creatividad);
+            creatividades[i] = creatividad;
         }
         
         return creatividades;
     }
 
     public static int problemaP1solucion(int n, int k, int P0, int P1, int P2, int P3, int P4){
-        ArrayList<Integer> candidatos = new ArrayList<>();
+        int[] candidatos = new int[n + 1];
         for (int i=0; i<=n; i++) {
-            candidatos.add(i); // todos los números
+            candidatos[i] = i; // todos los números
         }
-        ArrayList<Integer> creatividades = calcularCreatividades(candidatos, P0, P1, P2, P3, P4);
+        int[] creatividades = calcularCreatividades(candidatos, P0, P1, P2, P3, P4);
         int [][] dp = new int[k + 1][n + 1];
         for (int i = 0; i <= k; i++) {
             for (int j = 0; j <= n; j++) {
@@ -63,10 +62,10 @@ public class proyectoDalgoP1 {
         for (int i = 1; i <= k; i++) {
             for (int j = 0; j <= n; j++) {
                 // CORRECCIÓN 3: Usar índices para acceder a ArrayList
-                for (int idx = 0; idx < candidatos.size(); idx++) {
-                    int c = candidatos.get(idx);           // Obtener candidato
-                    int creatividad = creatividades.get(idx); // Obtener su creatividad
-                    
+                for (int idx = 0; idx < candidatos.length; idx++) {
+                    int c = candidatos[idx];           // Obtener candidato
+                    int creatividad = creatividades[idx]; // Obtener su creatividad
+
                     if (c <= j && dp[i-1][j-c] != -1) {
                         dp[i][j] = Math.max(dp[i][j], dp[i-1][j-c] + creatividad);
                     }
