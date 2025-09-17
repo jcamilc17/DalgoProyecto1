@@ -2,6 +2,8 @@
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class proyectoDalgoP1 {
 
@@ -11,10 +13,8 @@ public class proyectoDalgoP1 {
         }
         int creatividad = 0;
         int posicion = 0;
-        //int numeroOriginal = numero; // Guardar el número original para el mensaje
         while (numero > 0 && posicion < P.length) {
             int digito = numero % 10;
-
             if (digito == 3) {
                 creatividad += P[posicion];
             } else if (digito == 6) {
@@ -25,40 +25,114 @@ public class proyectoDalgoP1 {
             numero = numero / 10;
             posicion++;
         }
-        // System.out.println("Creatividad del número: " + creatividad + " para el número: " + numeroOriginal);
         return creatividad;
     }
 
-    public static int problemaP1solucion(int n, int k, int P0, int P1, int P2, int P3, int P4){
-       int[] creatividades = new int[n+1];
-       int[] posiciones = new int[]{P0, P1, P2, P3, P4};
-       for (int i = 0; i <= n; i++) {
-            creatividades[i] = calcularCreatividad(i, posiciones);
-       }
+    // ESTRATEGIA 1: DP completo para casos pequeños y medianos
+    public static int estrategiaDPComplete(int n, int k, int[] posiciones) {
+        // dp[celdas_usadas][suma_actual] = máxima creatividad
+        int[][] dp = new int[k + 1][n + 1];
+        for (int i = 0; i <= k; i++) {
+            Arrays.fill(dp[i], Integer.MIN_VALUE);
+        }
+        dp[0][0] = 0; // Caso base
 
-        int[] dpPrev = new int[n+1];
-        int[] dpCurr = new int[n+1];
-        Arrays.fill(dpPrev, -1);
-        dpPrev[0] = 0;
-
-        for (int i = 1; i <= k; i++) {
-            Arrays.fill(dpCurr, -1);
-            for (int j = 0; j <= n; j++) {
-                if (dpPrev[j] == -1) continue;
-                for (int x = 0; x <= n - j; x++) {
-                    int creatividad = creatividades[x];
-                    if (creatividad > 0 || x == 0) {
-                        dpCurr[j + x] = Math.max(dpCurr[j + x], dpPrev[j] + creatividad);
+        // Precalcular números útiles para optimización
+        ArrayList<Integer> numerosUtiles = new ArrayList<>();
+        ArrayList<Integer> creatividadesUtiles = new ArrayList<>();
+        numerosUtiles.add(0);
+        creatividadesUtiles.add(0);
+        
+        for (int i = 1; i <= n; i++) {
+            int creatividad = calcularCreatividad(i, posiciones);
+            if (creatividad > 0) {
+                numerosUtiles.add(i);
+                creatividadesUtiles.add(creatividad);
+            }
+        }
+        
+        // DP principal con optimización de transiciones
+        for (int celda = 1; celda <= k; celda++) {
+            // Recorrer sumas en orden inverso para evitar usar valores ya actualizados
+            for (int suma = n; suma >= 0; suma--) {
+                if (dp[celda - 1][suma] == Integer.MIN_VALUE) continue;
+                
+                int creatividadActual = dp[celda - 1][suma];
+                
+                // Optimización: solo considerar números útiles
+                for (int idx = 0; idx < numerosUtiles.size(); idx++) {
+                    int numero = numerosUtiles.get(idx);
+                    int creatividadNumero = creatividadesUtiles.get(idx);
+                    
+                    int nuevaSuma = suma + numero;
+                    if (nuevaSuma <= n) {
+                        int nuevaCreatividad = creatividadActual + creatividadNumero;
+                        dp[celda][nuevaSuma] = Math.max(dp[celda][nuevaSuma], nuevaCreatividad);
                     }
                 }
             }
-            // swap
-            int[] tmp = dpPrev;
-            dpPrev = dpCurr;
-            dpCurr = tmp;
         }
+        
+        // Encontrar la máxima creatividad para suma exacta n
+        int resultado = Integer.MIN_VALUE;
+        for (int celda = 1; celda <= k; celda++) {
+            if (dp[celda][n] != Integer.MIN_VALUE) {
+                resultado = Math.max(resultado, dp[celda][n]);
+            }
+        }
+        
+        return resultado == Integer.MIN_VALUE ? 0 : resultado;
+    }
+    
+    // ESTRATEGIA 2: Greedy optimizada para casos grandes
+    public static int estrategiaGreedy(int n, int k, int[] posiciones) {
+        // Recopilar todas las creatividades disponibles
+        ArrayList<Integer> creatividades = new ArrayList<>();
+        
+        for (int i = 1; i <= n; i++) {
+            int creatividad = calcularCreatividad(i, posiciones);
+            if (creatividad > 0) {
+                creatividades.add(creatividad);
+            }
+        }
+        // Verificar factibilidad: ¿es posible formar suma n?
+        boolean[] posible = new boolean[n + 1];
+        posible[0] = true;
+        
+        for (int i = 1; i <= n; i++) {
+            int creatividad = calcularCreatividad(i, posiciones);
+            if (creatividad > 0 || i == 0) {
+                for (int j = n; j >= i; j--) {
+                    if (posible[j - i]) {
+                        posible[j] = true;
+                    }
+                }
+            }
+        }
+        if (!posible[n]) {
+            return 0; // No es posible formar la suma n
+        }
+        // Ordenar creatividades de mayor a menor y tomar las k mejores
+        Collections.sort(creatividades, Collections.reverseOrder());
+        int suma = 0;
+        int limite = Math.min(k, creatividades.size());
+        for (int i = 0; i < limite; i++) {
+            suma += creatividades.get(i);
+        }
+        return suma;
+    }
 
-        return dpPrev[n] == -1 ? 0 : dpPrev[n];
+    public static int problemaP1solucion(int n, int k, int P0, int P1, int P2, int P3, int P4) {
+        int[] posiciones = new int[]{P0, P1, P2, P3, P4};
+        
+        // Decidir qué estrategia usar basado en el tamaño del problema
+        if (k >= 500 || n > 10000) {
+            // Para casos grandes: usar estrategia greedy (O(n²))
+            return estrategiaGreedy(n, k, posiciones);
+        } else {
+            // Para casos pequeños/medianos: usar DP completo (O(k×n²))
+            return estrategiaDPComplete(n, k, posiciones);
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -114,7 +188,7 @@ public class proyectoDalgoP1 {
 
             // Escribir resultados al archivo de salida
             for (int i = 0; i < resultados.length; i++) {
-                out.println(resultados[i] + " " + tiempos[i] + " ms");
+                out.println(resultados[i]);
             }
             out.flush();
         }
