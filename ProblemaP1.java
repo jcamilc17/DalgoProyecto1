@@ -1,62 +1,81 @@
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.Arrays;
 
 public class ProblemaP1 {
 
-    // Calcula la creatividad de un número
-    public static int calcularCreatividad(int numero, int[] P) {
-        if (numero == 0) return 0;
-        int creatividad = 0;
-        int posicion = 0;
-        while (numero > 0 && posicion < P.length) {
-            int digito = numero % 10;
-            if (digito == 3) creatividad += P[posicion];
-            else if (digito == 6) creatividad += 2 * P[posicion];
-            else if (digito == 9) creatividad += 3 * P[posicion];
-            numero /= 10;
-            posicion++;
-        }
-        return creatividad;
-    }
+    public static int solucionProyecto(int n, int k, int[]P) {
+        //Calcular creatividades
 
-    public static int problemaP1solucion(int n, int k, int P0, int P1, int P2, int P3, int P4) {
-        int[] P = {P0, P1, P2, P3, P4};
+        // DP
+        int[][] dp = new int[7][k + 1];
+        for (int i = 0; i < dp.length; i++) Arrays.fill(dp[i], Integer.MIN_VALUE);
+        dp[0][0] = 0;
 
-        // Generar candidatos (número, creatividad)
-        int[][] candidatos = new int[n + 1][2];
-        for (int i = 0; i <= n; i++) {
-            int c = calcularCreatividad(i, P);
-            if (c > 0 || i == 0) {
-                candidatos[i][0] = i;
-                candidatos[i][1] = c;
-            }
+        int[] digits = new int[6];
+        int temp = n;
+        for (int i = 0; i < 6; i++) {
+            digits[i] = temp % 10;
+            temp /= 10;
         }
 
-        // dp[j] = mejor creatividad para suma j con "i" elementos
-        int[] dp = new int[n + 1];
-        int[] next = new int[n + 1];
-        Arrays.fill(dp, -1);
-        dp[0] = 0; // caso base
-
-        for (int i = 1; i <= k; i++) {
-            Arrays.fill(next, -1);
-            for (int j = 0; j <= n; j++) {
-                if (dp[j] == -1) continue;
-                for (int[] cand : candidatos) {
-                    int valor = cand[0];
-                    int crea = cand[1];
-                    if (j + valor <= n) {
-                        next[j + valor] = Math.max(next[j + valor], dp[j] + crea);
+        for (int pos = 0; pos < 6; pos++) {
+            for (int cin = 0; cin <= k; cin++) {
+                if (dp[pos][cin] == Integer.MIN_VALUE) continue;
+                for (int cout = 0; cout <= k; cout++) {
+                    int sp = digits[pos] + 10 * cout - cin;
+                    if (sp < 0 || sp > 9 * k) continue;
+                    int creatividad = 0;
+                    if (pos < 5) {
+                        creatividad = P[pos] * (sp / 3);
                     }
+                    dp[pos + 1][cout] = Math.max(dp[pos + 1][cout], dp[pos][cin] + creatividad);
                 }
             }
-            // swap
-            int[] tmp = dp;
-            dp = next;
-            next = tmp;
         }
 
-        return Math.max(0, dp[n]);
+        return dp[6][0];
+    }
+
+    public static int[] calcularCreatividades(int n, int[] P) {
+        int[] creatividades = new int[n + 1];
+        for (int i = 0; i <= n; i++) {
+            int num = i;
+            int pos = 0;
+            int creatividad = 0;
+            while (num > 0 && pos < P.length) {
+                int digito = num % 10;
+                if (digito == 3) creatividad += P[pos];
+                else if (digito == 6) creatividad += 2 * P[pos];
+                else if (digito == 9) creatividad += 3 * P[pos];
+                num /= 10;
+                pos++;
+            }
+            creatividades[i] = creatividad;
+        }
+        return creatividades;
+    }
+
+    public static int noDigitDP(int n, int k, int[] P) {
+            // precalcular creatividades de 0..n
+        int[] creatividades = calcularCreatividades(n, P);
+
+        // dp[t][s] = max creatividad con t términos y suma s
+        int[][] dp = new int[k + 1][n + 1];
+        for (int i = 0; i <= k; i++) {
+            Arrays.fill(dp[i], Integer.MIN_VALUE / 2);
+        }
+        dp[0][0] = 0;
+
+        for (int t = 1; t <= k; t++) {
+            // máximo acumulado mientras recorremos sumas
+            int bestPrev = Integer.MIN_VALUE / 2;
+            for (int s = 0; s <= n; s++) {
+                bestPrev = Math.max(bestPrev, dp[t - 1][s] - creatividades[s]);
+                dp[t][s] = bestPrev + creatividades[s];
+            }
+        }
+
+        return dp[k][n];
     }
 
     public static void main(String[] args) throws Exception {
@@ -105,7 +124,7 @@ public class ProblemaP1 {
                 int P4 = datos[6];  // creatividad posición 4
 
                 long startTime = System.currentTimeMillis();
-                resultados[test] = problemaP1solucion(n, k, P0, P1, P2, P3, P4);
+                resultados[test] = solucionProyecto(n, k, new int[]{P0, P1, P2, P3, P4});
                 long endTime = System.currentTimeMillis();
                 tiempos[test] = endTime - startTime;
             }
