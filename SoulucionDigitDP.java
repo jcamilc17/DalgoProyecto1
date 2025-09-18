@@ -5,7 +5,7 @@ public class SoulucionDigitDP {
 
     public static int solucionProyecto(int n, int k, int[]P) {
         //Calcular creatividades
-
+        // [0, R]-[0, L] => [L, R]
         // DP
         int[][] dp = new int[7][k + 1];
         for (int i = 0; i < dp.length; i++) Arrays.fill(dp[i], Integer.MIN_VALUE);

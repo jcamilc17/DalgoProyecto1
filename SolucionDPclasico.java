@@ -1,65 +1,55 @@
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class SolucionDPclasico {
+    public static int calcularCreatividad(int n, int[] P) {
+        int creatividad = 0;
+        for (int pos = 0; pos < 5; pos++) {
+            int digit = (n / (int) Math.pow(10, pos)) % 10;
+            creatividad += P[pos] * (digit / 3);
+        }
+        return creatividad;
+    }
 
     public static int noDigitDP(int n, int k, int[] P) {
-        // Precalcular la creatividad de todos los números 1..n
-        int[] creat = new int[n + 1];
-        for (int i = 1; i <= n; i++) {
-            creat[i] = calcularCreatividad(i, P);
+        int[] creatividad = new int[n + 1];
+        for (int i = 0; i <= n; i++) {
+            creatividad[i] = calcularCreatividad(i, P);
         }
-        
-        // Encontrar los números con creatividad > 0
-        List<Integer> validNumbers = new ArrayList<>();
-        for (int i = 1; i <= n; i++) {
-            if (creat[i] > 0) {
-                validNumbers.add(i);
+
+        // Filtrar candidatos con creatividad > 0
+        int[] candVal = new int[n + 1];
+        int[] candCreat = new int[n + 1];
+        int cnt = 0;
+        for (int v = 1; v <= n; v++) {
+            if (creatividad[v] > 0) {
+                candVal[cnt] = v;
+                candCreat[cnt] = creatividad[v];
+                cnt++;
             }
         }
-        
-        // dp[i][j] = máxima creatividad usando i números para sumar j
-        int[][] dp = new int[k + 1][n + 1];
-        for (int i = 0; i <= k; i++) {
-            Arrays.fill(dp[i], -1);
-        }
-        dp[0][0] = 0;
-        
-        for (int num : validNumbers) {
-            for (int i = k; i >= 1; i--) {
-                for (int j = n; j >= num; j--) {
-                    if (dp[i - 1][j - num] != -1) {
-                        dp[i][j] = Math.max(dp[i][j], dp[i - 1][j - num] + creat[num]);
+
+        int[] dp = new int[n + 1];
+        int[] next = new int[n + 1];
+        Arrays.fill(dp, Integer.MIN_VALUE / 2);
+        dp[0] = 0;
+
+        for (int used = 1; used <= k; used++) {
+            Arrays.fill(next, Integer.MIN_VALUE / 2);
+            for (int sum = 0; sum <= n; sum++) {
+                if (dp[sum] == Integer.MIN_VALUE / 2) continue;
+                for (int idx = 0; idx < cnt; idx++) {
+                    int v = candVal[idx];
+                    int c = candCreat[idx];
+                    if (sum + v <= n) {
+                        next[sum + v] = Math.max(next[sum + v], dp[sum] + c);
                     }
                 }
             }
+            int[] tmp = dp; dp = next; next = tmp;
         }
-        
-        return Math.max(0, dp[k][n]);
-    }
-    
-    public static int calcularCreatividad(int numero, int[] P) {
-        if (numero == 0) return 0;
-        
-        int creatividad = 0;
-        int posicion = 0;
-        int temp = numero;
-        
-        while (temp > 0 && posicion < P.length) {
-            int digito = temp % 10;
-            if (digito == 3) {
-                creatividad += P[posicion];
-            } else if (digito == 6) {
-                creatividad += 2 * P[posicion];
-            } else if (digito == 9) {
-                creatividad += 3 * P[posicion];
-            }
-            temp = temp / 10;
-            posicion++;
-        }
-        return creatividad;
+
+        return Math.max(dp[n], 0);
     }
 
     public static void main(String[] args) throws Exception {
