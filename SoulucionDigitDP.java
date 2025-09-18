@@ -1,7 +1,7 @@
 import java.io.*;
 import java.util.Arrays;
 
-public class ProblemaP1 {
+public class SoulucionDigitDP {
 
     public static int solucionProyecto(int n, int k, int[]P) {
         //Calcular creatividades
@@ -34,48 +34,6 @@ public class ProblemaP1 {
         }
 
         return dp[6][0];
-    }
-
-    public static int[] calcularCreatividades(int n, int[] P) {
-        int[] creatividades = new int[n + 1];
-        for (int i = 0; i <= n; i++) {
-            int num = i;
-            int pos = 0;
-            int creatividad = 0;
-            while (num > 0 && pos < P.length) {
-                int digito = num % 10;
-                if (digito == 3) creatividad += P[pos];
-                else if (digito == 6) creatividad += 2 * P[pos];
-                else if (digito == 9) creatividad += 3 * P[pos];
-                num /= 10;
-                pos++;
-            }
-            creatividades[i] = creatividad;
-        }
-        return creatividades;
-    }
-
-    public static int noDigitDP(int n, int k, int[] P) {
-            // precalcular creatividades de 0..n
-        int[] creatividades = calcularCreatividades(n, P);
-
-        // dp[t][s] = max creatividad con t términos y suma s
-        int[][] dp = new int[k + 1][n + 1];
-        for (int i = 0; i <= k; i++) {
-            Arrays.fill(dp[i], Integer.MIN_VALUE / 2);
-        }
-        dp[0][0] = 0;
-
-        for (int t = 1; t <= k; t++) {
-            // máximo acumulado mientras recorremos sumas
-            int bestPrev = Integer.MIN_VALUE / 2;
-            for (int s = 0; s <= n; s++) {
-                bestPrev = Math.max(bestPrev, dp[t - 1][s] - creatividades[s]);
-                dp[t][s] = bestPrev + creatividades[s];
-            }
-        }
-
-        return dp[k][n];
     }
 
     public static void main(String[] args) throws Exception {
