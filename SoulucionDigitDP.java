@@ -18,17 +18,19 @@ public class SoulucionDigitDP {
             temp /= 10;
         }
 
-        for (int pos = 0; pos < 6; pos++) {
-            for (int cin = 0; cin <= k; cin++) {
-                if (dp[pos][cin] == Integer.MIN_VALUE) continue;
-                for (int cout = 0; cout <= k; cout++) {
-                    int sp = digits[pos] + 10 * cout - cin;
-                    if (sp < 0 || sp > 9 * k) continue;
-                    int creatividad = 0;
-                    if (pos < 5) {
-                        creatividad = P[pos] * (sp / 3);
+        for (int i = 0; i < 6; i++) {
+            int digit = digits[i];
+            for (int Kpast = 0; Kpast <= k; Kpast++) {
+                if (dp[i][Kpast] != Integer.MIN_VALUE) {
+                    for (int Kact = 0; Kact <= k; Kact++) {
+                        int sp = digit + ((10 * Kact) - Kpast);
+                        if (sp < 0 || sp > 9 * k) continue;
+                        int creatividad = 0;
+                        if (i < 5) {
+                            creatividad = P[i] * (sp / 3);
+                        }
+                        dp[i + 1][Kact] = Math.max(dp[i + 1][Kact], dp[i][Kpast] + creatividad);
                     }
-                    dp[pos + 1][cout] = Math.max(dp[pos + 1][cout], dp[pos][cin] + creatividad);
                 }
             }
         }
