@@ -4,9 +4,14 @@ import java.util.Arrays;
 public class SolucionDPclasico {
     public static int calcularCreatividad(int n, int[] P) {
         int creatividad = 0;
+        int temp = n;
         for (int pos = 0; pos < 5; pos++) {
-            int digit = (n / (int) Math.pow(10, pos)) % 10;
-            creatividad += P[pos] * (digit / 3);
+            int digit = temp % 10;
+            if (digit == 3) creatividad += P[pos];
+            else if (digit == 6) creatividad += 2 * P[pos];
+            else if (digit == 9) creatividad += 3 * P[pos];
+            temp /= 10;
+            if (temp == 0) break; // ya no quedan dígitos
         }
         return creatividad;
     }
@@ -44,11 +49,8 @@ public class SolucionDPclasico {
                 dp[celda][suma] = Math.max(dp[celda][suma], dp[celda - 1][suma]);
             }
         }
-        int maxCreatividad = 0;
-        for (int suma = 0; suma <= n; suma++) {
-            maxCreatividad = Math.max(maxCreatividad, dp[k][suma]);
-        }
-        return maxCreatividad;
+        
+        return dp[k][n] < 0 ? 0 : dp[k][n];
     }
 
     public static void main(String[] args) throws Exception {

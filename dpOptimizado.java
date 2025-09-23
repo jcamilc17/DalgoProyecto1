@@ -1,60 +1,66 @@
 import java.util.*;
 
 public class dpOptimizado {
-	// Calcula creatividad de un número
 	public static int calcularCreatividad(int n, int[] P) {
-		int creatividad = 0;
-		for (int pos = 0; pos < 5; pos++) {
-			int digit = (n / (int) Math.pow(10, pos)) % 10;
-			if (digit == 3) creatividad += P[pos];
-			else if (digit == 6) creatividad += 2 * P[pos];
-			else if (digit == 9) creatividad += 3 * P[pos];
-		}
-		return creatividad;
-	}
+        int creatividad = 0;
+        int temp = n;
+        for (int pos = 0; pos < 5; pos++) {
+            int digit = temp % 10;
+            if (digit == 3) creatividad += P[pos];
+            else if (digit == 6) creatividad += 2 * P[pos];
+            else if (digit == 9) creatividad += 3 * P[pos];
+            temp /= 10;
+            if (temp == 0) break; // ya no quedan dígitos
+        }
+        return creatividad;
+    }
 
 	// Genera candidatos creativos
 	// Genera candidatos: todos los números con creatividad > 0
-	public static List<Integer> generarCandidatosCreativos(int n, int[] P) {
+	public static int[] generarCandidatosCreativos(int n, int[] P) {
 		List<Integer> candidatos = new ArrayList<>();
 		candidatos.add(0); // incluir el 0 como candidato válido
 		for (int i = 1; i <= n; i++) {
 			if (calcularCreatividad(i, P) > 0) candidatos.add(i);
 		}
-		return candidatos;
+		return candidatos.stream().mapToInt(Integer::intValue).toArray();
 	}
 
 	// Knapsack O(nk) usando solo candidatos creativos
-	public static int knapsackOKN(int n, int k, int[] P) {
-		List<Integer> candList = generarCandidatosCreativos(n, P);
+	public static int knapsack(int n, int k, int[] P) {
+		int[] candList = generarCandidatosCreativos(n, P);
 
 		int[] creatividad = new int[n + 1];
 		for (int i = 0; i <= n; i++) creatividad[i] = calcularCreatividad(i, P);
 
-		int[] explore = new int[]{0};
 		int[] dp = new int[n + 1];
 		Arrays.fill(dp, -1);
 		dp[0] = 0;
+
+		int[] explore = new int[]{0}; // estados alcanzados en la capa actual
+
 		for (int celda = 1; celda <= k; celda++) {
-			int[] next = new int[n + 1];
-			Arrays.fill(next, -1);
-			for (int i = 0; i <= n; i++) {
-				if (dp[i] == -1) continue;
+			int[] next = Arrays.copyOf(dp, dp.length);
+			List<Integer> exploreNext = new ArrayList<>();
+
+			for (int i : explore) {
 				for (int cand : candList) {
 					if (i + cand <= n) {
 						int c = creatividad[cand];
-						next[i + cand] = Math.max(next[i + cand], dp[i] + c);
+						if (next[i + cand] < dp[i] + c) {
+							next[i + cand] = dp[i] + c;
+							exploreNext.add(i + cand);
+						}
 					} else break;
 				}
 			}
-			if (Arrays.equals(dp, next)) break;
+
 			dp = next;
+			explore = exploreNext.stream().mapToInt(Integer::intValue).toArray();
+			if (explore.length == 0) break; // no hay más transiciones posibles
 		}
-		int maxCreatividad = 0;
-		for (int i = 0; i <= n; i++) {
-			maxCreatividad = Math.max(maxCreatividad, dp[i]);
-		}
-		return maxCreatividad;
+
+		return dp[n] < 0 ? 0 : dp[n];
 	}
 
 	// Ejemplo de uso
@@ -86,7 +92,7 @@ public class dpOptimizado {
 			int P3 = datos[5];
 			int P4 = datos[6];
 			long startTime = System.currentTimeMillis();
-			int resultado = knapsackOKN(n, k, new int[]{P0, P1, P2, P3, P4});
+			int resultado = knapsack(n, k, new int[]{P0, P1, P2, P3, P4});
 			long endTime = System.currentTimeMillis();
 			System.out.println(resultado + " " + (endTime - startTime) + " ms");
 		}
