@@ -12,12 +12,11 @@ public class SolucionDPclasico {
     }
 
     public static int noDigitDP(int n, int k, int[] P) {
+        // Generar candidatos con creatividad > 0
         int[] creatividad = new int[n + 1];
         for (int i = 0; i <= n; i++) {
             creatividad[i] = calcularCreatividad(i, P);
         }
-
-        // Filtrar candidatos con creatividad > 0
         int[] candVal = new int[n + 1];
         int[] candCreat = new int[n + 1];
         int cnt = 0;
@@ -28,28 +27,28 @@ public class SolucionDPclasico {
                 cnt++;
             }
         }
-
-        int[] dp = new int[n + 1];
-        int[] next = new int[n + 1];
-        Arrays.fill(dp, Integer.MIN_VALUE / 2);
-        dp[0] = 0;
-
-        for (int used = 1; used <= k; used++) {
-            Arrays.fill(next, Integer.MIN_VALUE / 2);
-            for (int sum = 0; sum <= n; sum++) {
-                if (dp[sum] == Integer.MIN_VALUE / 2) continue;
+        // DP de dos dimensiones: dp[celda][suma]
+        int[][] dp = new int[k + 1][n + 1];
+        for (int i = 0; i <= k; i++) Arrays.fill(dp[i], Integer.MIN_VALUE / 2);
+        dp[0][0] = 0;
+        for (int celda = 1; celda <= k; celda++) {
+            for (int suma = 0; suma <= n; suma++) {
                 for (int idx = 0; idx < cnt; idx++) {
                     int v = candVal[idx];
                     int c = candCreat[idx];
-                    if (sum + v <= n) {
-                        next[sum + v] = Math.max(next[sum + v], dp[sum] + c);
+                    if (suma >= v && dp[celda - 1][suma - v] != Integer.MIN_VALUE / 2) {
+                        dp[celda][suma] = Math.max(dp[celda][suma], dp[celda - 1][suma - v] + c);
                     }
                 }
+                // También puede no usar ningún candidato en esta celda
+                dp[celda][suma] = Math.max(dp[celda][suma], dp[celda - 1][suma]);
             }
-            int[] tmp = dp; dp = next; next = tmp;
         }
-
-        return Math.max(dp[n], 0);
+        int maxCreatividad = 0;
+        for (int suma = 0; suma <= n; suma++) {
+            maxCreatividad = Math.max(maxCreatividad, dp[k][suma]);
+        }
+        return maxCreatividad;
     }
 
     public static void main(String[] args) throws Exception {
