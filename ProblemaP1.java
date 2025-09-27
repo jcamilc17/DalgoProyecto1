@@ -115,10 +115,8 @@ public class ProblemaP1 {
 			int P2 = datos[4];
 			int P3 = datos[5];
 			int P4 = datos[6];
-			Long startTime = System.currentTimeMillis();
 			int resultado = knapsack(n, k, new int[]{P0, P1, P2, P3, P4});
-			Long endTime = System.currentTimeMillis();
-			System.out.println(resultado + " " + (endTime - startTime) + " ms");
+			System.out.println(resultado);
 		}
 	}
 }
