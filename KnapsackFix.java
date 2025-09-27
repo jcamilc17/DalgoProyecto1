@@ -1,7 +1,6 @@
 import java.util.*;
 
 public class KnapsackFix {
-	// Calcula creatividad de un número
 	public static int calcularCreatividad(int n, int[] P) {
         int creatividad = 0;
         int temp = n;
@@ -28,7 +27,7 @@ public class KnapsackFix {
 	}
 
 	// Knapsack O(nk) usando solo candidatos creativos
-	public static int knapsackOKN(int n, int k, int[] P) {
+	public static int knapsack(int n, int k, int[] P) {
 		int[] candList = generarCandidatosCreativos(n, P);
 
 		int[] creatividad = new int[n + 1];
@@ -37,21 +36,30 @@ public class KnapsackFix {
 		int[] dp = new int[n + 1];
 		Arrays.fill(dp, -1);
 		dp[0] = 0;
+
+		int[] explore = new int[]{0}; // estados alcanzados en la capa actual
+
 		for (int celda = 1; celda <= k; celda++) {
-			int[] next = new int[n + 1];
-			Arrays.fill(next, -1);
-			for (int i = 0; i <= n; i++) {
-				if (dp[i] == -1) continue;
+			int[] next = Arrays.copyOf(dp, dp.length);
+			List<Integer> exploreNext = new ArrayList<>();
+
+			for (int i : explore) {
 				for (int cand : candList) {
 					if (i + cand <= n) {
 						int c = creatividad[cand];
-						next[i + cand] = Math.max(next[i + cand], dp[i] + c);
+						if (next[i + cand] < dp[i] + c) {
+							next[i + cand] = dp[i] + c;
+							exploreNext.add(i + cand);
+						}
 					} else break;
 				}
 			}
-			if (Arrays.equals(dp, next)) break;
+
 			dp = next;
+			explore = exploreNext.stream().mapToInt(Integer::intValue).toArray();
+			if (explore.length == 0) break; // no hay más transiciones posibles
 		}
+
 		return dp[n] < 0 ? 0 : dp[n];
 	}
 
@@ -84,7 +92,7 @@ public class KnapsackFix {
 			int P3 = datos[5];
 			int P4 = datos[6];
 			long startTime = System.currentTimeMillis();
-			int resultado = knapsackOKN(n, k, new int[]{P0, P1, P2, P3, P4});
+			int resultado = knapsack(n, k, new int[]{P0, P1, P2, P3, P4});
 			long endTime = System.currentTimeMillis();
 			System.out.println(resultado + " " + (endTime - startTime) + " ms");
 		}

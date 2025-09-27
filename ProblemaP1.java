@@ -1,6 +1,10 @@
+// Juan Sebastian Robles - 202411827, Juan Camilo Caldas - 202322445
+
 import java.util.*;
 
-public class dpOptimizado {
+public class ProblemaP1 {
+	static final int KEEP = 10;
+
 	public static int calcularCreatividad(int n, int[] P) {
         int creatividad = 0;
         int temp = n;
@@ -15,20 +19,35 @@ public class dpOptimizado {
         return creatividad;
     }
 
-	// Genera candidatos creativos
-	// Genera candidatos: todos los números con creatividad > 0
-	public static int[] generarCandidatosCreativos(int n, int[] P) {
-		List<Integer> candidatos = new ArrayList<>();
-		candidatos.add(0); // incluir el 0 como candidato válido
+	// KEEP: cuántos pesos (números) guardar por cada valor de creatividad (ajusta según memoria/precisión)
+	public static int[] generarCandidatosComprimidos(int n, int[] P) {
+		int[] creatividad = new int[n + 1];
+		for (int i = 0; i <= n; i++) creatividad[i] = calcularCreatividad(i, P);
+
+		// Para cada valor de creatividad guardamos un max-heap con los KEEP pesos más pequeños
+		Map<Integer, PriorityQueue<Integer>> map = new HashMap<>();
 		for (int i = 1; i <= n; i++) {
-			if (calcularCreatividad(i, P) > 0) candidatos.add(i);
+			int c = creatividad[i];
+			if (c <= 0) continue;
+			PriorityQueue<Integer> pq = map.computeIfAbsent(c, k -> new PriorityQueue<>(Collections.reverseOrder()));
+			pq.offer(i);
+			if (pq.size() > KEEP) pq.poll(); // mantener sólo los KEEP más pequeños (pq es max-heap)
 		}
+
+		List<Integer> candidatos = new ArrayList<>();
+		candidatos.add(0);
+		for (PriorityQueue<Integer> pq : map.values()) {
+			while (!pq.isEmpty()) {
+				candidatos.add(pq.poll());
+			}
+		}
+		Collections.sort(candidatos); // orden ascendente (útil para cortar con 'break' si quieres)
 		return candidatos.stream().mapToInt(Integer::intValue).toArray();
 	}
 
 	// Knapsack O(nk) usando solo candidatos creativos
 	public static int knapsack(int n, int k, int[] P) {
-		int[] candList = generarCandidatosCreativos(n, P);
+		int[] candList = generarCandidatosComprimidos(n, P);
 
 		int[] creatividad = new int[n + 1];
 		for (int i = 0; i <= n; i++) creatividad[i] = calcularCreatividad(i, P);
@@ -37,27 +56,32 @@ public class dpOptimizado {
 		Arrays.fill(dp, -1);
 		dp[0] = 0;
 
-		int[] explore = new int[]{0}; // estados alcanzados en la capa actual
+		int[] explore = new int[]{0};
 
 		for (int celda = 1; celda <= k; celda++) {
 			int[] next = Arrays.copyOf(dp, dp.length);
+			boolean[] added = new boolean[n + 1]; // para no duplicar en exploreNext
 			List<Integer> exploreNext = new ArrayList<>();
 
 			for (int i : explore) {
+				if (dp[i] < 0) continue;
 				for (int cand : candList) {
-					if (i + cand <= n) {
-						int c = creatividad[cand];
-						if (next[i + cand] < dp[i] + c) {
-							next[i + cand] = dp[i] + c;
-							exploreNext.add(i + cand);
+					int to = i + cand;
+					if (to > n) continue; // candList está ordenado, podrías usar break si confías en el orden
+					int val = dp[i] + creatividad[cand];
+					if (next[to] < val) {
+						next[to] = val;
+						if (!added[to]) {
+							added[to] = true;
+							exploreNext.add(to);
 						}
-					} else break;
+					}
 				}
 			}
 
+			if (exploreNext.isEmpty()) break;
 			dp = next;
 			explore = exploreNext.stream().mapToInt(Integer::intValue).toArray();
-			if (explore.length == 0) break; // no hay más transiciones posibles
 		}
 
 		return dp[n] < 0 ? 0 : dp[n];
@@ -91,9 +115,9 @@ public class dpOptimizado {
 			int P2 = datos[4];
 			int P3 = datos[5];
 			int P4 = datos[6];
-			long startTime = System.currentTimeMillis();
+			Long startTime = System.currentTimeMillis();
 			int resultado = knapsack(n, k, new int[]{P0, P1, P2, P3, P4});
-			long endTime = System.currentTimeMillis();
+			Long endTime = System.currentTimeMillis();
 			System.out.println(resultado + " " + (endTime - startTime) + " ms");
 		}
 	}
